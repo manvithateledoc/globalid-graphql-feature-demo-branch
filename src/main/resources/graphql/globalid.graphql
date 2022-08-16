@@ -1,0 +1,156 @@
+
+# :: QUERIES / MUTATIONS ::
+
+type Query {
+
+    retrieveIdentity(identity: GlobalIdInput): [SourceId]
+    deleteIdentity(identity: GlobalIdInput): Output
+    dropIdentity(identity: GlobalIdInput): Output
+    retrieveIdentityByLocalId(identity: LocalIdInput): [SourceId]
+    searchIdentity (person: ConsumerInput!): [Identity!]!
+}
+
+type Mutation {
+
+    performIndividualization(person: ConsumerInput!): GlobalId
+    registerNewEntity(person: ConsumerInput!,root: String!, id: String!): GlobalId!
+    requestIdentityMerge(globalIds: [GlobalIdInput!]!): GlobalId!
+}
+
+# :: SCALARS / ENUMS ::
+
+scalar UUID
+scalar DateTime
+scalar Date
+enum NameUse {                      # Mirrors https://www.hl7.org/fhir/datatypes-definitions.html#HumanName.use
+    TEMP
+    ANONYMOUS
+    USUAL
+    OFFICIAL
+    NICKNAME
+    OLD
+    MAIDEN
+}
+
+enum ContactPointSystem {           # Mirrors http://www.hl7.org/fhir/valueset-contact-point-system.html
+    OTHER
+    PHONE
+    FAX
+    EMAIL
+    PAGER
+    URL
+    SMS
+}
+
+enum ContactPointUse {              # Mirrors http://www.hl7.org/fhir/valueset-contact-point-use.html
+    HOME
+    WORK
+    TEMP
+    OLD
+    MOBILE
+}
+
+enum AdministrativeGender {         # Mirrors http://www.hl7.org/fhir/valueset-administrative-gender.html
+    UNKNOWN
+    OTHER
+    MALE
+    FEMALE
+}
+
+enum AddressUse {                   # Mirrors hl7.org/fhir/valueset-address-use.html
+    HOME
+    WORK
+    TEMP
+    OLD
+    BILLING
+}
+
+
+# :: MODEL TYPES ::
+
+
+type Output{
+    isDeleted:Boolean
+}
+
+# Source/Local/Global ID types
+interface Identity {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+type SourceId implements Identity {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+type GlobalId implements Identity {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+type LocalId implements Identity {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+# :: INPUT TYPES ::
+
+
+
+input LocalIdInput {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+input GlobalIdInput {
+    id: String
+    issuedOn: DateTime
+    root: String
+}
+
+input PeriodInput {                       # Loosely mirrors https://www.hl7.org/fhir/datatypes.html#period; added precision
+    start: DateTime
+    end: DateTime
+}
+
+input ContactPointInput {                 # Mirrors http://www.hl7.org/fhir/datatypes.html#contactpoint
+    system: ContactPointSystem
+    value: String
+    use: ContactPointUse
+    rank: Int
+    period: PeriodInput
+}
+
+input NameInput {                         # Mirrors https://www.hl7.org/fhir/datatypes.html#HumanName
+    use: NameUse
+    family: String
+    given: [String!]
+    prefix: String
+    suffix: String
+    period: PeriodInput
+}
+
+input AddressInput {                      # Mirrors http://www.hl7.org/fhir/datatypes.html#Address
+    use: AddressUse
+    line: [String!]
+    city: String
+    state: String
+    postalCode: String
+    district: String
+    country: String
+    period: PeriodInput
+}
+
+input ConsumerInput {
+    names: [NameInput!]
+    contactPoints: [ContactPointInput!]
+    gender: AdministrativeGender
+    birthDate: Date!
+    addresses: [AddressInput!]
+}

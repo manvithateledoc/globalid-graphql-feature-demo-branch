@@ -1,0 +1,74 @@
+---
+# Source: inventory/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: globalid-graphql
+  labels:
+    app: globalid-graphql
+    release: globalid-graphql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: globalid-graphql
+      release: globalid-graphql
+  template:
+    metadata:
+      labels:
+        app: globalid-graphql
+        release: globalid-graphql
+    spec:
+      imagePullSecrets:
+        - name: artifactory
+      containers:
+      - name: globalid-graphql
+        image: "${DOCKER_REGISTRY}/globalid-graphql:${DEPLOY_TAG}"
+        imagePullPolicy: "Always"
+        volumeMounts:
+        - mountPath: /spring-tmp
+          name: spring-tmp
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 35
+          periodSeconds: 20
+          failureThreshold: 6
+        resources:
+          limits:
+            memory: 384Mi
+          requests:
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+        env:
+        - name: JAVA_OPTS
+          value: "-Djava.io.tmpdir=/spring-tmp"
+        - name: HOST
+          value: mdm
+        - name: PORT
+          value: "9080"
+        - name: USERID
+          value: mdmadmin
+        - name: PASSWORD
+          # value: mdmadmin
+          valueFrom:
+            secretKeyRef:
+              name: mdm-secrets
+              key: MDMADMIN_PWD
+      volumes:
+      - name: spring-tmp
+        emptyDir:
+          medium: "Memory"

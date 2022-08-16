@@ -1,0 +1,76 @@
+---
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+    - name: aws-cli
+      image: docker.artifactory.intouchhealth.io/tdh/aws-cli:1.18.157
+      imagePullPolicy: IfNotPresent
+      command:
+      - cat
+      tty: true
+      ports:
+      - containerPort: 80
+    - name: aws-encryption-cli
+      image: docker.artifactory.intouchhealth.io/devops/docker-jenkins-aws-encryption-sdk-cli:master-2
+      command:
+      - cat
+      tty: true
+      volumeMounts:
+      - mountPath: /var/run/docker.sock
+        name: docker-sock
+      ports:
+      - containerPort: 80
+    - name: docker
+      image: docker.artifactory.intouchhealth.io/devops/docker:19.03.6-dind
+      imagePullPolicy: IfNotPresent
+      command:
+      - cat
+      tty: true
+      volumeMounts:
+      - mountPath: /var/run/docker.sock
+        name: docker-sock
+      ports:
+      - containerPort: 80
+    - name: eod-tools
+      image: docker.artifactory.intouchhealth.io/tdh/eod-tools:latest
+      imagePullPolicy: IfNotPresent
+      command:
+      - cat
+      tty: true
+      ports:
+      - containerPort: 80
+    - name: hadolint
+      image: docker.artifactory.intouchhealth.io/hadolint/hadolint:2.10.0-alpine
+      imagePullPolicy: IfNotPresent
+      command:
+      - cat
+      tty: true
+      volumeMounts:
+      - mountPath: /var/run/docker.sock
+        name: docker-sock
+  imagePullSecrets:
+    - name: regcreds
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: partition
+            operator: In
+            values:
+            - spot-agents
+            - regular-agents
+  tolerations:
+    - key: partition
+      operator: Equal
+      value: spot-agents
+      effect: NoSchedule
+    - key: partition
+      operator: Equal
+      value: regular-agents
+      effect: NoSchedule

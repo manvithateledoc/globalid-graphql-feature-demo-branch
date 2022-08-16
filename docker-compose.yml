@@ -1,0 +1,89 @@
+version: "3.9"
+services:
+  global-id-graphql:
+    container_name: global-id-graphql
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+    environment:
+      - host=mdm
+      - port=9080
+      - userId=mdmadmin
+      - password=mdmadmin
+
+  mdm-db:
+    container_name: mdm-db
+    hostname: mdm-db
+    # image: oracle/database:19.3.0-ee
+    image: 048189774358.dkr.ecr.us-west-2.amazonaws.com/oracle-database:19.3.0-ee
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    environment:
+      - ORACLE_SID=MDMDB
+      - ORACLE_PDB=MDMPDB
+      - ORACLE_PWD=dbadminpwd
+      - ORACLE_EDITION=enterprise
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+      - "5550:5550"
+    volumes:
+      - mdm-db:/opt/oracle/oradata
+    restart: always
+  mdm:
+    container_name: mdm
+    hostname: mdm
+    # image: mdm:latest
+    image: 048189774358.dkr.ecr.us-west-2.amazonaws.com/mdm-oracle:12.0.0.0-1.0
+    environment:
+      - DB_SERVICENAME=MDMPDB
+      - DB_HOSTNAME=mdm-db
+      - DB_PORT=1521
+      - DB_SCHEMA=MDM
+      - DB_USERNAME=mdmdbuser
+      # OMIT SYSDBA_* variables for non developer environments
+      - SYSDBA_USERNAME=sys
+      # SECRETS
+      - SYSDBA_PWD=dbadminpwd
+      - DB_PWD=mdmdbpass
+      - MDMADMIN_PWD=mdmadmin
+      - PROBE_PWD=probepwd
+    entrypoint: ["/work/scripts/wait-for-it/wait-for-it.sh","mdm-db:1521","--timeout=0","--strict", "--", "/work/scripts/IMT_start_server.sh"]
+    ports:
+      - "9043:9043"
+      - "9080:9080"
+      - "9443:9443"
+      - "8880:8880"
+    volumes:
+      - ./config:/work/config
+      - ./postconfig:/work/postconfig
+      - ./config_always:/work/config_always
+      - ./postconfig_always:/work/postconfig_always
+      - ./scripts:/work/scripts
+    restart: always
+  mdm-wb:
+    # image: us.icr.io/mdmaese/deployed-wb:12.0.0.0R2
+    image: 048189774358.dkr.ecr.us-west-2.amazonaws.com/mdm-wb:12.0.0.0-1.0
+    ports:
+      - "5901:5901"
+      - "5902:5902"
+      - "5903:5903"
+      - "5904:5904"
+      - "6080:6080"
+      - "6081:6081"
+      - "6082:6082"
+      - "6083:6083"
+    container_name: mdm-wb
+    hostname: mdm-wb
+    command: bash -c "rm -rf /tmp/.X1-lock /tmp/.X11-unix/X1 && mkdir -p /home/ws9admin/.vnc && echo 4Teladoc | vncpasswd -f > /home/ws9admin/.vnc/passwd && chown -R ws9admin:root /home/ws9admin/.vnc && chmod 0600 /home/ws9admin/.vnc/passwd && vncserver -geometry 1920x1080 && websockify -D --web=/usr/share/novnc/ 6080 localhost:5901 && tail -f /dev/null"
+    environment:
+      USER: root
+      RAD_HOME: /opt/IBM/SDP
+    volumes:
+      - ./workspace:/home/ws9admin/IBM/rationalsdp/workspace
+    restart: always
+volumes:
+  mdm-db:
