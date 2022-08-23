@@ -16,8 +16,12 @@ public class DeleteService {
     private final Context context;
     private final RetrieveIdentityService retrieveIdentityService;
 
+    private final Producer producer;
+    private final String DELETE_TOPIC="test-del-gid-topic";
+
     public Output dropById(GlobalID globalID) {
         IxnMemDrop ixnMemDrop = new IxnMemDrop(context);
+        producer.sendDeleteMessage( globalID,DELETE_TOPIC );
 
         MemRowList searchRows =new MemRowList();
         ixnMemDrop.setMemType("PERSON");

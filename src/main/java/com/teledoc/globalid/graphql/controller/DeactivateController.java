@@ -17,7 +17,6 @@ import java.rmi.ServerException;
 public class DeactivateController {
 
     private final DeactivateService deactivateService;
-
     public Output deleteById(@Argument  GlobalID identity){
         return deactivateService.deleteById(identity);
 
