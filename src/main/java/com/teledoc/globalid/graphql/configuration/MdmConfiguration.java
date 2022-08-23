@@ -13,7 +13,7 @@ public class MdmConfiguration {
     @Value("${host:localhost}")
     private String host;
 
-    @Value("${port:9080}")
+    @Value("${port:9081}")
     private int port;
 
     @Value("${userId:mdmadmin}")
