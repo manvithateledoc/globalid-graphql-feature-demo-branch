@@ -3,12 +3,13 @@ package com.teledoc.globalid.graphql;
 import com.teledoc.globalid.graphql.entities.identities.Identity;
 import madison.mpi.*;
 import madison.util.SetterException;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-
+@Ignore
 public class MDMOutputConverterTest {
     MDMOutputConverter mdmOutputConverter;
     MemRowList memRowList;
